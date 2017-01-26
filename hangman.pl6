@@ -32,7 +32,7 @@ sub random-word(WordList \list) returns CharList {
 }
 
 class Puzzle {
-    has Str $.answer;
+    has Str $.answer is required;
     has CharList @.discovered;
     has CharList @.guessed;
     
@@ -43,7 +43,7 @@ class Puzzle {
     }
 }
 
-sub fresh-puzzle(Str $s) returns Puzzle {}
+sub fresh-puzzle(Str \s) returns Puzzle { Puzzle.new: s }
 
 multi render-puzzle-char(Char:U $c) returns Char { "_" }
 multi render-puzzle-char(Char:D $c) returns Char { $c  }
