@@ -37,8 +37,15 @@ sub term:<random-word>() { game-words.&random-word }
 
 class Puzzle {
     has Str $.answer is required;
-    has CharList @.discovered;
-    has %.guessed;
+    has Str $.discovered;
+    has %.guessed is Set;
+    
+    multi method new($answer,$discovered,$guessed){
+        samewith :$answer, :$discovered,:$guessed;
+    }
+    submethod TWEAK {
+        $!discovered ||= '_' x $!answer.chars;
+    }
     
     method Str() {
         #instance Show Puzzle where
@@ -64,9 +71,32 @@ sub already-guessed(Puzzle \puzzle, Char \c) returns Bool {
     puzzle.guessed (cont) c
 }
 
-sub fill-in-character(Puzzle $puzz, Char $char) returns Puzzle {}
+sub fill-in-character(
+    Puzzle \puzzle (
+        :answer($word),
+        :discovered($filled-in-so-far),
+        :guessed($s),
+        *%
+    ),
+    Char \c
+) returns Puzzle {
+    sub zipper (\guessed) {
+        -> \word-char, \guess-char {
+            if word-char eq guessed {
+                word-char
+            } else {
+                guess-char
+            }
+        }
+    }
 
-sub handle-guess(Puzzle \puzzle, Char \guess) {
+    my \new-filled-in-so-far =
+        [~] zip :with(zipper c), $word.comb, $filled-in-so-far.comb;
+
+    Puzzle.new: $word, new-filled-in-so-far, c (|) $s
+}
+
+sub handle-guess(Puzzle \puzzle, Char \guess) returns Puzzle {
     put "Your guess was: ", guess;
     given
         char-in-word(puzzle, guess),
