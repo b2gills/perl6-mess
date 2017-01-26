@@ -1,6 +1,7 @@
 sub exit-success { exit 0 }
 
 subset Char     of Str  where { $_.chars == 1        };
+subset MaybeChar of Str  where !.defined || .chars == 1;
 #subset CharList of List where { $_.all   ~~ Char     };
 constant CharList = Str; # makes things much simpler
 subset WordList of List where { $_.all   ~~ CharList };
@@ -37,26 +38,24 @@ sub term:<random-word>() { game-words.&random-word }
 
 class Puzzle {
     has Str $.answer is required;
-    has Str $.discovered;
+    has MaybeChar @.discovered;
     has %.guessed is Set;
     
-    multi method new($answer,$discovered,$guessed){
-        samewith :$answer, :$discovered,:$guessed;
+    multi method new($answer,@discovered,$guessed){
+        samewith :$answer, :@discovered,:$guessed;
     }
     submethod TWEAK {
-        $!discovered ||= '_' x $!answer.chars;
+        @!discovered ||= Str xx $!answer.chars;
     }
     
-    method Str() {
-        #instance Show Puzzle where
-        #show (Puzzle _ discovered guessed) =
-        #(intersperse ' ' $ fmap renderPuzzleChar discovered) ++ " Guessed so far: " ++ guessed
+    method Str() { self.show }
+    method show() {
+        join(' ',map( &render-puzzle-char, @!discovered )) ~ 
+        " Guessed so far: " ~ %!guessed.keys
     }
 }
 
-sub show(Puzzle \puzzle) {
-    ...
-}
+sub show(Puzzle \puzzle) { puzzle.show }
 
 sub fresh-puzzle(Str \s) returns Puzzle { Puzzle.new: s }
 
@@ -74,7 +73,7 @@ sub already-guessed(Puzzle \puzzle, Char \c) returns Bool {
 sub fill-in-character(
     Puzzle \puzzle (
         :answer($word),
-        :discovered($filled-in-so-far),
+        :discovered(@filled-in-so-far),
         :guessed($s),
         *%
     ),
@@ -91,7 +90,7 @@ sub fill-in-character(
     }
 
     my \new-filled-in-so-far =
-        [~] zip :with(zipper c), $word.comb, $filled-in-so-far.comb;
+        zip :with(zipper c), $word.comb, @filled-in-so-far;
 
     Puzzle.new: $word, new-filled-in-so-far, c (|) $s
 }
@@ -125,7 +124,7 @@ sub game-over(Puzzle \puzzle (:answer($word-to-guess), :$guessed, *%)) {
     }
 }
 
-sub game-win(Puzzle \puzzle (:discovered($filled-in-so-far), *%)) {
+sub game-win(Puzzle \puzzle (:discovered(@filled-in-so-far), *%)) {
     if (...) {
         put 'You win!';
         exit-success;
