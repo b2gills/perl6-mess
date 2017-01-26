@@ -1,6 +1,6 @@
 sub exit-success { exit 0 }
 
-subset Char     of Str  where { $_.chars == 1        };
+subset Char      of Str  where  .defined && .chars == 1;
 subset MaybeChar of Str  where !.defined || .chars == 1;
 #subset CharList of List where { $_.all   ~~ Char     };
 constant CharList = Str; # makes things much simpler
@@ -42,10 +42,11 @@ class Puzzle {
     has %.guessed is Set;
     
     multi method new($answer,@discovered,$guessed){
-        samewith :$answer, :@discovered,:$guessed;
+        samewith :$answer, :@discovered, :$guessed;
     }
-    submethod TWEAK {
+    submethod BUILD (:$!answer,:@!discovered,:%guessed) {
         @!discovered ||= Str xx $!answer.chars;
+        %!guessed := %guessed;
     }
     
     method Str() { self.show }
@@ -57,10 +58,10 @@ class Puzzle {
 
 sub show(Puzzle \puzzle) { puzzle.show }
 
-sub fresh-puzzle(Str \s) returns Puzzle { Puzzle.new: s }
+sub fresh-puzzle(Str \s) returns Puzzle { Puzzle.new: s, (Str xx s.chars), set() }
 
-multi render-puzzle-char(Char:U $c) returns Char { "_" }
-multi render-puzzle-char(Char:D $c) returns Char { $c  }
+multi render-puzzle-char(Str:U $) returns Char { "_" }
+multi render-puzzle-char(Char \c) returns Char {  c  }
 
 sub char-in-word(Puzzle \puzzle, Char \c) returns Bool {
     puzzle.answer.contains: c
@@ -136,10 +137,10 @@ sub run-game(Puzzle \puzzle) {
         game-over puzzle;
         game-win puzzle;
         put 'Current puzzle is: ', show puzzle;
-        my \guess = input 'Guess a letter: ';
+        my \guess = prompt 'Guess a letter: ';
         given guess {
             when Char {
-                run-game handle-guess puzzle, c;
+                run-game handle-guess puzzle, guess;
             }
             default {
                 put 'Your guess must be a single character'
