@@ -125,7 +125,7 @@ sub game-over(Puzzle \puzzle (:answer($word-to-guess), :$guessed, *%)) {
 }
 
 sub game-win(Puzzle \puzzle (:discovered(@filled-in-so-far), *%)) {
-    if (...) {
+    if @filled-in-so-far.all.defined {
         put 'You win!';
         exit-success;
     }
@@ -139,7 +139,7 @@ sub run-game(Puzzle \puzzle) {
         my \guess = input 'Guess a letter: ';
         given guess {
             when Char {
-                handle-guess puzzle, c, &run-game;
+                run-game handle-guess puzzle, c;
             }
             default {
                 put 'Your guess must be a single character'
