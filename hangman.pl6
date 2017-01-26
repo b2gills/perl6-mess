@@ -1,27 +1,34 @@
 subset Char     of Str  where { $_.chars == 1        };
-subset CharList of List where { $_.all   ~~ Char     };
+#subset CharList of List where { $_.all   ~~ Char     };
+constant CharList = Str; # makes things much simpler
 subset WordList of List where { $_.all   ~~ CharList };
 
-sub all-words() returns WordList {
-    #read dictionary file
-    #get the lines of the file
-    #comb all words and return as a wordlist
-}
+my \dictionary = (
+    first * ~~ :e,
+    map *.?IO,
+    %*ENV<dictionary>, 'data/dict.txt', '/usr/share/dict/words', '/usr/dict/words'
+);
 
-my Int $min-word-length = 5;
-my Int $max-word-length = 9;
+sub all-words() returns WordList {
+    dictionary.lines # returns a Seq
+    .List            # turn it into a List to satisfy WordList
+}
+# Haskell has a single namespace for functions and variables
+# Let's fake that here by pretending all-words was a variable
+my &term:<all-words> = &all-words;
+
+my Int \min-word-length = 5;
+my Int \max-word-length = 9;
 
 sub game-words() returns WordList {
-    #  WordList aw <- allWords
-    #  return $ WordList (filter gameLength aw)
-    #  where gameLength w =
-    #          let l = length (w :: String)
-    #          in  l < minWordLength && l < maxWordLength
+    all-words # term:<all-words>()
+    .grep({ min-word-length <= .chars <= max-word-length})
+    .List # turn it into a List to satisfy WordList
 }
+my &term:<game-words> = &game-words;
 
-sub random-word(WordList @list) returns Str {
-    #pick random number
-    #return a word from wordlist
+sub random-word(WordList \list) returns CharList {
+    list.pick
 }
 
 class Puzzle {
