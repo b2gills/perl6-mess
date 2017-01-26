@@ -1,3 +1,5 @@
+sub exit-success { exit 0 }
+
 subset Char     of Str  where { $_.chars == 1        };
 #subset CharList of List where { $_.all   ~~ Char     };
 constant CharList = Str; # makes things much simpler
@@ -68,12 +70,19 @@ sub handle-guess(Puzzle \puzzle, Char \c) {
     ...
 }
 
-sub game-over(Puzzle \puzzle) {
-    ...
+sub game-over(Puzzle \puzzle (:answer($word-to-guess), :$guessed, *%)) {
+    if $guessed > 7 {
+        put 'You lose!';
+        put 'The word was: ', $word-to-guess;
+        exit-success
+    }
 }
 
-sub game-win(Puzzle \puzzle) {
-    ...
+sub game-win(Puzzle \puzzle (:discovered($filled-in-so-far), *%)) {
+    if (...) {
+        put 'You win!';
+        exit-success;
+    }
 }
 
 sub run-game(Puzzle \puzzle) {
