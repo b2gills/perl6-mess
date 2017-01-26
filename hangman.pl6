@@ -34,7 +34,7 @@ sub random-word(WordList \list) returns CharList {
 class Puzzle {
     has Str $.answer is required;
     has CharList @.discovered;
-    has CharList @.guessed;
+    has %.guessed;
     
     method Str() {
         #instance Show Puzzle where
@@ -48,8 +48,12 @@ sub fresh-puzzle(Str \s) returns Puzzle { Puzzle.new: s }
 multi render-puzzle-char(Char:U $c) returns Char { "_" }
 multi render-puzzle-char(Char:D $c) returns Char { $c  }
 
-sub char-in-word(Puzzle $puzz, Char $char) returns Bool {}
+sub char-in-word(Puzzle \puzzle, Char \c) returns Bool {
+    puzzle.answer.contains: c
+}
 
-sub already-guessed(Puzzle $puzz, Char $char) returns Bool {}
+sub already-guessed(Puzzle \puzzle, Char \c) returns Bool {
+    puzzle.guessed (cont) c
+}
 
 sub fill-in-character(Puzzle $puzz, Char $char) returns Puzzle {}
