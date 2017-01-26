@@ -45,6 +45,10 @@ class Puzzle {
     }
 }
 
+sub show(Puzzle \puzzle) {
+    ...
+}
+
 sub fresh-puzzle(Str \s) returns Puzzle { Puzzle.new: s }
 
 multi render-puzzle-char(Char:U $c) returns Char { "_" }
@@ -60,8 +64,33 @@ sub already-guessed(Puzzle \puzzle, Char \c) returns Bool {
 
 sub fill-in-character(Puzzle $puzz, Char $char) returns Puzzle {}
 
-sub run-game(Puzzle \puzzle) {
+sub handle-guess(Puzzle \puzzle, Char \c) {
     ...
+}
+
+sub game-over(Puzzle \puzzle) {
+    ...
+}
+
+sub game-win(Puzzle \puzzle) {
+    ...
+}
+
+sub run-game(Puzzle \puzzle) {
+    loop {
+        game-over puzzle;
+        game-win puzzle;
+        put 'Current puzzle is: ', show puzzle;
+        my \guess = input 'Guess a letter: ';
+        given guess {
+            when Char {
+                handle-guess puzzle, c, &run-game;
+            }
+            default {
+                put 'Your guess must be a single character'
+            }
+        }
+    }
 }
 
 sub MAIN() {
