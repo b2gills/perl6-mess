@@ -1,11 +1,22 @@
-subset WordList of List where { $_.all ~~ Str };
-subset Char of Str where { $_.chars ~~ 1 };
-subset CharList of List where { $_.all ~~ Char };
-
+subset Char     of Str  where { $_.chars == 1        };
+subset CharList of List where { $_.all   ~~ Char     };
+subset WordList of List where { $_.all   ~~ CharList };
 
 sub all-words() returns WordList {
     #read dictionary file
-    #return the lines of the file as a wordlist
+    #get the lines of the file
+    #comb all words and return as a wordlist
+}
+
+my Int $min-word-length = 5;
+my Int $max-word-length = 9;
+
+sub game-words() returns WordList {
+    #  WordList aw <- allWords
+    #  return $ WordList (filter gameLength aw)
+    #  where gameLength w =
+    #          let l = length (w :: String)
+    #          in  l < minWordLength && l < maxWordLength
 }
 
 sub random-word(WordList @list) returns Str {
