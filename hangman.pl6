@@ -66,8 +66,25 @@ sub already-guessed(Puzzle \puzzle, Char \c) returns Bool {
 
 sub fill-in-character(Puzzle $puzz, Char $char) returns Puzzle {}
 
-sub handle-guess(Puzzle \puzzle, Char \c) {
-    ...
+sub handle-guess(Puzzle \puzzle, Char \guess) {
+    put "Your guess was: ", guess;
+    given
+        char-in-word(puzzle, guess),
+        already-guessed(puzzle, guess)
+    {
+        when (*, :so) {
+            put "You already guessed that character, pick something else!";
+            return puzzle;
+        }
+        when (:so, *) {
+            put "This character was in the word, filling in the word accordingly";
+            return fill-in-character puzzle, guess;
+        }
+        when (:not, *) {
+            put "This character wasn't in the word, try again";
+            return fill-in-character puzzle, guess;
+        }
+    }
 }
 
 sub game-over(Puzzle \puzzle (:answer($word-to-guess), :$guessed, *%)) {
