@@ -30,6 +30,8 @@ my &term:<game-words> = &game-words;
 sub random-word(WordList \list) returns CharList {
     list.pick
 }
+# replacement for randomWord'
+sub term:<random-word>() { game-words.&random-word }
 
 class Puzzle {
     has Str $.answer is required;
@@ -57,3 +59,13 @@ sub already-guessed(Puzzle \puzzle, Char \c) returns Bool {
 }
 
 sub fill-in-character(Puzzle $puzz, Char $char) returns Puzzle {}
+
+sub run-game(Puzzle \puzzle) {
+    ...
+}
+
+sub MAIN() {
+    my \word = random-word;
+    my \puzzle = fresh-puzzle word.lc;
+    run-game puzzle
+}
