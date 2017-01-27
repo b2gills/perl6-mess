@@ -39,26 +39,25 @@ sub term:<random-word>() { game-words.&random-word }
 class Puzzle {
     has Str $.answer is required;
     has MaybeChar @.discovered;
-    has %.guessed is Set;
+    has Char @.guessed;
     
-    multi method new($answer,@discovered,$guessed){
-        samewith :$answer, :@discovered, :$guessed;
+    multi method new($answer,@discovered,@guessed){
+        samewith :$answer, :@discovered, :@guessed;
     }
-    submethod BUILD (:$!answer,:@!discovered,:%guessed) {
+    submethod BUILD (:$!answer,:@!discovered?,:@!guessed?) {
         @!discovered ||= Str xx $!answer.chars;
-        %!guessed := %guessed;
     }
     
     method Str() { self.show }
     method show() {
         join(' ',map( &render-puzzle-char, @!discovered )) ~ 
-        " Guessed so far: " ~ %!guessed.keys
+        " Guessed so far: " ~ @!guessed
     }
 }
 
 sub show(Puzzle \puzzle) { puzzle.show }
 
-sub fresh-puzzle(Str \s) returns Puzzle { Puzzle.new: s, (Str xx s.chars), set() }
+sub fresh-puzzle(Str \s) returns Puzzle { Puzzle.new: s, (Str xx s.chars), () }
 
 multi render-puzzle-char(Str:U $) returns Char { "_" }
 multi render-puzzle-char(Char \c) returns Char {  c  }
@@ -75,7 +74,7 @@ sub fill-in-character(
     Puzzle \puzzle (
         :answer($word),
         :discovered(@filled-in-so-far),
-        :guessed($s),
+        :guessed(@s),
         *%
     ),
     Char \c
@@ -93,7 +92,7 @@ sub fill-in-character(
     my \new-filled-in-so-far =
         zip :with(zipper c), $word.comb, @filled-in-so-far;
 
-    Puzzle.new: $word, new-filled-in-so-far, c (|) $s
+    Puzzle.new: $word, new-filled-in-so-far, (c,|@s)
 }
 
 sub handle-guess(Puzzle \puzzle, Char \guess) returns Puzzle {
@@ -117,8 +116,8 @@ sub handle-guess(Puzzle \puzzle, Char \guess) returns Puzzle {
     }
 }
 
-sub game-over(Puzzle \puzzle (:answer($word-to-guess), :$guessed, *%)) {
-    if $guessed > 7 {
+sub game-over(Puzzle \puzzle (:answer($word-to-guess), :@guessed, *%)) {
+    if @guessed > 7 {
         put 'You lose!';
         put 'The word was: ', $word-to-guess;
         exit-success
