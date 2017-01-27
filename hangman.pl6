@@ -1,10 +1,8 @@
 sub exit-success { exit 0 }
 
-subset Char      of Str  where  .defined && .chars == 1;
-subset MaybeChar of Str  where !.defined || .chars == 1;
-#subset CharList of List where { $_.all   ~~ Char     };
-constant CharList = Str; # makes things much simpler
-subset WordList of List where { $_.all   ~~ CharList };
+subset Char     of Str:_  where !.defined || .chars == 1;
+constant CharList = Str:D;
+subset WordList of List:D where .all ~~ CharList;
 
 my \dictionary = (
     first * ~~ :e,
@@ -34,14 +32,18 @@ sub random-word(WordList \list) returns CharList {
     list.pick
 }
 # replacement for randomWord'
-sub term:<random-word>() { game-words.&random-word }
+sub term:<random-word>() returns CharList { game-words.&random-word }
 
 class Puzzle {
-    has Str $.answer is required;
-    has MaybeChar @.discovered;
-    has Char @.guessed;
+    has CharList $.answer is required;
+    has Char:_ @.discovered;
+    has Char:D @.guessed;
     
-    multi method new($answer,@discovered,@guessed){
+    multi method new(
+        $answer,
+        @discovered,
+        @guessed
+    ){
         samewith :$answer, :@discovered, :@guessed;
     }
     submethod BUILD (:$!answer,:@!discovered?,:@!guessed?) {
@@ -49,38 +51,38 @@ class Puzzle {
     }
     
     method Str() { self.show }
-    method show() {
+    method show() returns CharList {
         join(' ',map( &render-puzzle-char, @!discovered )) ~ 
         " Guessed so far: " ~ @!guessed
     }
 }
 
-sub show(Puzzle \puzzle) { puzzle.show }
+sub show(Puzzle:D \puzzle) returns CharList { puzzle.show }
 
-sub fresh-puzzle(Str \s) returns Puzzle { Puzzle.new: s, (Str xx s.chars), () }
+sub fresh-puzzle(CharList \s) returns Puzzle:D { Puzzle.new: s, (Str xx s.chars), () }
 
-multi render-puzzle-char(Str:U $) returns Char { "_" }
-multi render-puzzle-char(Char \c) returns Char {  c  }
+multi render-puzzle-char(Char:U $ ) returns Char:D { "_" }
+multi render-puzzle-char(Char:D \c) returns Char:D {  c  }
 
-sub char-in-word(Puzzle \puzzle, Char \c) returns Bool {
+sub char-in-word(Puzzle:D \puzzle, Char:D \c) returns Bool:D {
     puzzle.answer.contains: c
 }
 
-sub already-guessed(Puzzle \puzzle, Char \c) returns Bool {
+sub already-guessed(Puzzle:D \puzzle, Char:D \c) returns Bool:D {
     puzzle.guessed (cont) c
 }
 
 sub fill-in-character(
-    Puzzle \puzzle (
+    Puzzle:D \puzzle (
         :answer($word),
         :discovered(@filled-in-so-far),
         :guessed(@s),
         *%
     ),
-    Char \c
-) returns Puzzle {
-    sub zipper (\guessed) {
-        -> \word-char, \guess-char {
+    Char:D \c
+) returns Puzzle:D {
+    sub zipper (Char:D \guessed) returns Callable:D {
+        -> Char:D \word-char, Char:_ \guess-char --> Char:_ {
             if word-char eq guessed {
                 word-char
             } else {
@@ -95,7 +97,7 @@ sub fill-in-character(
     Puzzle.new: $word, new-filled-in-so-far, (c,|@s)
 }
 
-sub handle-guess(Puzzle \puzzle, Char \guess) returns Puzzle {
+sub handle-guess(Puzzle:D \puzzle, Char:D \guess) returns Puzzle:D {
     put "Your guess was: ", guess;
     given
         char-in-word(puzzle, guess),
@@ -116,7 +118,7 @@ sub handle-guess(Puzzle \puzzle, Char \guess) returns Puzzle {
     }
 }
 
-sub game-over(Puzzle \puzzle (:answer($word-to-guess), :@guessed, *%)) {
+sub game-over(Puzzle:D \puzzle (:answer($word-to-guess), :@guessed, *%)) {
     if @guessed > 7 {
         put 'You lose!';
         put 'The word was: ', $word-to-guess;
@@ -124,14 +126,14 @@ sub game-over(Puzzle \puzzle (:answer($word-to-guess), :@guessed, *%)) {
     }
 }
 
-sub game-win(Puzzle \puzzle (:discovered(@filled-in-so-far), *%)) {
+sub game-win(Puzzle:D \puzzle (:discovered(@filled-in-so-far), *%)) {
     if @filled-in-so-far.all.defined {
         put 'You win!';
         exit-success;
     }
 }
 
-sub run-game(Puzzle \puzzle) {
+sub run-game(Puzzle:D \puzzle) {
     loop {
         game-over puzzle;
         game-win puzzle;
